@@ -1,0 +1,59 @@
+{
+  "title": "Linked Data Fragments server",
+  "baseURL": "/",
+
+  "port": 3000,
+  "workers": 1,
+
+  "datasources": {
+    "dbpedia": {
+      "title": "DBLP Computer Science Bibliography",
+      "type": "HdtDatasource",
+      "description": "DBLP Computer Science Bibliography with an HDT back-end",
+      "settings": { "file": "data/dblp-2012-11-28b.hdt" }
+    },
+    "dbpedia-sparql": {
+      "title": "DBpedia 3.9 (Virtuoso)",
+      "type": "SparqlDatasource",
+      "description": "DBpedia 3.9 with a Virtuoso back-end",
+      "settings": { "endpoint": "http://dbpedia.restdesc.org/", "defaultGraph": "http://dbpedia.org" }
+    }
+  },
+
+  "dereference": {
+    "/resource/": "dbpedia"
+  },
+
+  "prefixes": {
+    "rdf":   "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs":  "http://www.w3.org/2000/01/rdf-schema#",
+    "owl":   "http://www.w3.org/2002/07/owl#",
+    "xsd":   "http://www.w3.org/2001/XMLSchema#",
+    "hydra": "http://www.w3.org/ns/hydra/core#",
+    "void":  "http://rdfs.org/ns/void#"
+  },
+
+  "response": {
+    "headers": {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Accept-Datetime",
+      "Access-Control-Expose-Headers": "Content-Location,Link,Memento-Datetime"
+    }
+  },
+
+  "extensions": {
+    "TriplePatternFragmentsController": [
+      "MementoControllerExtension"
+    ]
+  },
+
+  "ssl": {
+    "keys" : {
+      "key":  "config/certs/localhost-server.key",
+      "cert": "config/certs/localhost-server.crt",
+      "ca": [ "config/certs/localhost-ca.crt" ]
+    }
+  },
+
+  "logging": { "enabled": true }
+}
