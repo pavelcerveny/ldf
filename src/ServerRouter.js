@@ -1,7 +1,10 @@
 const AssetsController = require('./controllers/AssetsController');
+const DereferenceController = require('./controllers/DereferenceController');
 const TriplePatternFragmentsController = require('./controllers/TriplePatternFragmentsController');
 const Router = require('router');
 const parseForwarded = require('forwarded-parse');
+const url = require('url');
+const _ = require('lodash');
 
 require('marko/node-require').install();
 const indexTemplate = require('./views/index.marko');
@@ -9,38 +12,64 @@ const indexTemplate = require('./views/index.marko');
 const PLAINTEXT = 'text/plain;charset=utf-8';
 
 class ServerRouter {
-  constructor (config, logger) {
+  constructor (config) {
     this.router = new Router({});
     this.config = config;
-    this.logger = logger;
+    this.logger = this.config.logging.logger;
+    this.controllers = {
+      TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger),
+      AssetsController: new AssetsController(this.config, this.logger),
+      DereferenceController: new DereferenceController(this.config, this.logger)
+    };
 
+    this.setRoutes();
+  }
+
+  setRoutes () {
     this.router.head('*', (req, res, params) => {
       res.write = function () {};
       res.end = res.end.bind(res, '', '');
     });
 
+    /**
+     * 
+     */
     this.router.options('*', (req, res, params) => {
       res.write = function () {};
       res.end = res.end.bind(res, '', '');
     });
 
-    this.router.get('/', (req, res, params) => {
-      // res.end('{"message":"hello world"}')
+    /**
+     * Route for all static assets
+     */
+    this.router.get('/assets/*', (req, res, params) => {
+      this.controllers.AssetsController.handle(req, res);
+    });
+
+    /**
+     * Auto-generate routes for dereferencing defined in config
+     * eg. { '/resource/': 'dbpedia'} -> '/resource/dbpedia
+     */
+    for (const [key, value] of Object.entries(this.config.dereference)) {
+      this.router.get(`${key}${value}*`, (req, res, params) => {
+        req.dereference = value;
+        req.datasource = key;
+        this.controllers.DereferenceController.handle(this.parseUrlAndHeaders(req), res);
+      });
+    }
+
+    /**
+     * Single relevant endpoint for extracting fragments
+     * - all other arguments are given via GET parameters (matching for other parameters must be done in Controller itself)
+     * TODO: think of better solution
+     */
+    this.router.get('/*', (req, res, params) => {
       indexTemplate.render({
         assetsPath: 'assets',
         baseURL: '/',
         header: ''
       }, res);
-      new TriplePatternFragmentsController(this.config, req, logger);
-
-    });
-
-    this.router.get('/assets/*', (req, res, params) => {
-      AssetsController(req, res);
-    });
-
-    this.router.get('*', (req, res, params) => {
-      // error
+      this.controllers.TriplePatternFragmentsController.handle(this.parseUrlAndHeaders(req), res, () => {});
     });
 
     // all other http methods
@@ -55,7 +84,20 @@ class ServerRouter {
   }
 
   parseUrlAndHeaders (request) {
+    this._baseUrl = _.mapValues(url.parse(this.config.baseURL || '/'), function (value, key) {
+      return value && !/^(?:href|path|search|hash)$/.test(key) ? value : undefined;
+    });
 
+    if (!request.parsedUrl) {
+      // Keep the request's path and query, but take over all other defined baseURL properties
+      request.parsedUrl = _.defaults(_.pick(url.parse(request.url, true), 'path', 'pathname', 'query'),
+        this._baseUrl,
+        ServerRouter.getForwardedHeaders(request),
+        ServerRouter.getXForwardedHeaders(request),
+        { protocol: 'http:', host: request.headers.host });
+    }
+
+    return request;
   }
 
   /**
@@ -71,10 +113,9 @@ class ServerRouter {
       const forwarded = parseForwarded(request.headers.forwarded);
       return {
         protocol: forwarded.proto ? forwarded.proto + ':' : undefined,
-        host: forwarded.host,
+        host: forwarded.host
       };
-    }
-    catch (error) {
+    } catch (error) {
       this.logger.error(`Unable to parse HTTP Forwarded header ${error}`);
       return {};
     }
@@ -83,7 +124,7 @@ class ServerRouter {
   static getXForwardedHeaders (request) {
     return {
       protocol: request.headers['x-forwarded-proto'] ? request.headers['x-forwarded-proto'] + ':' : undefined,
-      host: request.headers['x-forwarded-host'],
+      host: request.headers['x-forwarded-host']
     };
   }
 
@@ -92,7 +133,7 @@ class ServerRouter {
    * @param {ServerResponse} response
    * @returns void
    */
-  handleNotAcceptable (response) {
+  static handleNotAcceptable (response) {
     response.writeHead(406, { 'Content-Type': PLAINTEXT });
     response.end('No suitable content type found.\n');
   }

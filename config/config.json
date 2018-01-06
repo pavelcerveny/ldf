@@ -5,13 +5,9 @@
   "port": 3000,
   "workers": 1,
 
+  "limit": 100,
+
   "datasources": {
-    "dbpedia": {
-      "title": "DBLP Computer Science Bibliography",
-      "type": "HdtDatasource",
-      "description": "DBLP Computer Science Bibliography with an HDT back-end",
-      "settings": { "file": "data/dblp-2012-11-28b.hdt" }
-    },
     "dbpedia-sparql": {
       "title": "DBpedia 3.9 (Virtuoso)",
       "type": "SparqlDatasource",
@@ -21,7 +17,7 @@
   },
 
   "dereference": {
-    "/resource/": "dbpedia"
+    "/resource/": "dbpedia-sparql"
   },
 
   "prefixes": {

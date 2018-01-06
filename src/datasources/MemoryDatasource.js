@@ -25,8 +25,9 @@ MemoryDatasource.prototype._getAllTriples = function (addTriple, done) {
 
 // Writes the results of the query to the given triple stream
 MemoryDatasource.prototype._executeQuery = function (query, destination) {
+
   var offset = query.offset || 0, limit = query.limit || Infinity,
-      triples = this._tripleStore.findByIRI(query.subject, query.predicate, query.object);
+      triples = this._tripleStore.getTriplesByIRI(query.subject, query.predicate, query.object);
   // Send the metadata
   destination.setProperty('metadata', { totalCount: triples.length, hasExactCount: true });
   // Send the requested subset of triples

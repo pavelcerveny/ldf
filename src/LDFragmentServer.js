@@ -1,19 +1,18 @@
 'use strict';
 
 const http = require('http');
-const ServerRouter = require('./ServerRouter');
 
 class LDFragmentServer {
-  constructor (options) {
-    this.options = options;
+  constructor (config) {
+    this.config = config;
     this.server = {};
-    this.logger = this.options.logging.logger;
-    this.router = new ServerRouter(options, this.logger);
+    this.logger = this.config.logging.logger;
+    this.router = {};
   }
 
-  // set setRouter (router) {
-  //   this.router = router;
-  // }
+  set setRouter (router) {
+    this.router = router;
+  }
 
   createServer () {
     // TODO: add https variant
@@ -22,9 +21,8 @@ class LDFragmentServer {
     this.server.on('request', (req, res) => {
       // execute parsing
       // add default headers from config
-      this.logger.info('New request');
+      this.logger.info(`New request - pathname: ${req.url}`);
       this.router.getRouter(req, res, this.logger);
-      console.log([req, res]);
       // this.router.handleRoutes(req, res);
     });
 

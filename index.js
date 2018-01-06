@@ -1,6 +1,7 @@
 'use strict';
 
 const LDFragmentServer = require('./src/LDFragmentServer');
+const ServerRouter = require('./src/ServerRouter');
 const fs = require('fs');
 const path = require('path');
 const Utils = require('./src/Utils');
@@ -89,8 +90,7 @@ Object.keys(datasources).forEach(function (datasourceName) {
       datasourceConfig.title = datasourceConfig.title || datasourceName;
 
       config.datasources[datasourceName] = datasourceConfig;
-    }
-    catch (error) {
+    } catch (error) {
       delete datasources[datasourcePath];
       config.logging.logger.warn('WARNING: skipped datasource ' + datasourceName + '. ' + error.message + '\n');
     }
@@ -103,12 +103,14 @@ datasources[indexPath] = datasources[indexPath] || {
   url: baseURLRoot + '/' + indexPath + '#dataset',
   role: 'index',
   title: 'dataset index',
-  datasource: new IndexDatasource({ datasources: datasources }),
+  datasource: new IndexDatasource({ datasources: datasources })
 };
-
 
 const server = new LDFragmentServer(config);
 
+const router = new ServerRouter(config);
+
+server.setRouter = router;
 server.createServer();
 
 // determine ssl certificates usage

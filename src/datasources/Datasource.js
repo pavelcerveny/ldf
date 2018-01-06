@@ -69,23 +69,29 @@ Object.defineProperty(Datasource.prototype, 'supportedFeatures', {
 // Checks whether the data source can evaluate the given query
 Datasource.prototype.supportsQuery = function (query) {
   // An uninitialized datasource does not support any query
-  if (!this.initialized)
+  if (!this.initialized) {
     return false;
+  }
 
   // A query is supported if the data source supports all of its features
-  var features = query.features, supportedFeatures = this.supportedFeatures, feature;
+  const features = query.features; // array
+  const supportedFeatures = this.supportedFeatures; // object -> { limit: true, ... }
+  let feature = null;
+
   if (features) {
     for (feature in features) {
-      if (features[feature] && !supportedFeatures[feature])
+      if (features.hasOwnProperty(feature) && !supportedFeatures[feature]) {
         return false;
+      }
     }
     return true;
   }
   // A query without features is supported if this data source has at least one feature
   else {
     for (feature in supportedFeatures) {
-      if (supportedFeatures[feature])
+      if (supportedFeatures.hasOwnProperty(feature) && supportedFeatures[feature]) {
         return true;
+      }
     }
     return false;
   }
@@ -93,25 +99,36 @@ Datasource.prototype.supportsQuery = function (query) {
 
 // Selects the triples that match the given query, returning a triple stream
 Datasource.prototype.select = function (query, onError) {
-  if (!this.initialized)
+  if (!this.initialized) {
     return onError && onError(new Error('The datasource is not initialized yet'));
-  if (!this.supportsQuery(query))
+  }
+
+  if (!this.supportsQuery(query)) {
     return onError && onError(new Error('The datasource does not support the given query'));
+  }
 
   // Translate blank nodes IRIs in the query to blank nodes
-  var blankNodePrefix = this._blankNodePrefix, blankNodePrefixLength = this._blankNodePrefixLength;
-  if (query.subject && query.subject.indexOf(blankNodePrefix) === 0)
+  const blankNodePrefix = this._blankNodePrefix;
+  const blankNodePrefixLength = this._blankNodePrefixLength;
+
+  if (query.subject && query.subject.indexOf(blankNodePrefix) === 0) {
     (query = _.clone(query)).subject = '_:' + query.subject.substr(blankNodePrefixLength);
-  if (query.object  && query.object.indexOf(blankNodePrefix) === 0)
-    (query = _.clone(query)).object  = '_:' + query.object.substr(blankNodePrefixLength);
+  }
+
+  if (query.object && query.object.indexOf(blankNodePrefix) === 0) {
+    (query = _.clone(query)).object = '_:' + query.object.substr(blankNodePrefixLength);
+  }
 
   // Translate blank nodes in the result to blank node IRIs
-  var destination = new BufferedIterator(), outputTriples;
+  const destination = new BufferedIterator();
+  let outputTriples;
+
   outputTriples = destination.map(function (triple) {
     if (triple.subject[0] === '_') triple.subject = blankNodePrefix + triple.subject.substr(2);
-    if (triple.object[0]  === '_') triple.object  = blankNodePrefix + triple.object.substr(2);
+    if (triple.object[0] === '_') triple.object = blankNodePrefix + triple.object.substr(2);
     return triple;
   });
+
   outputTriples.copyProperties(destination, ['metadata']);
   onError && outputTriples.on('error', onError);
 
@@ -129,29 +146,29 @@ Datasource.prototype._executeQuery = function (query, destination) {
 // Retrieves a stream through HTTP or the local file system
 Datasource.prototype._fetch = function (options) {
   var self = this, stream,
-      url = options.url, protocolMatch = /^(?:([a-z]+):)?/.exec(url);
+    url = options.url, protocolMatch = /^(?:([a-z]+):)?/.exec(url);
   switch (protocolMatch[1] || 'file') {
-  // Fetch a representation through HTTP(S)
-  case 'http':
-  case 'https':
-    stream = this._request(options);
-    stream.on('response', function (response) {
-      if (response.statusCode >= 300) {
-        setImmediate(function () {
-          stream.emit('error', new Error(url + ' returned ' + response.statusCode));
-        });
-      }
-    });
-    break;
-  // Read a file from the local filesystem
-  case 'file':
-    stream = fs.createReadStream(url.substr(protocolMatch[0].length), { encoding: 'utf8' });
-    break;
-  default:
-    stream = new EventEmitter();
-    setImmediate(function () {
-      stream.emit('error', new Error('Unknown protocol: ' + protocolMatch[1]));
-    });
+    // Fetch a representation through HTTP(S)
+    case 'http':
+    case 'https':
+      stream = this._request(options);
+      stream.on('response', function (response) {
+        if (response.statusCode >= 300) {
+          setImmediate(function () {
+            stream.emit('error', new Error(url + ' returned ' + response.statusCode));
+          });
+        }
+      });
+      break;
+    // Read a file from the local filesystem
+    case 'file':
+      stream = fs.createReadStream(url.substr(protocolMatch[0].length), {encoding: 'utf8'});
+      break;
+    default:
+      stream = new EventEmitter();
+      setImmediate(function () {
+        stream.emit('error', new Error('Unknown protocol: ' + protocolMatch[1]));
+      });
   }
 
   // If the stream has no other error handlers attached (besides this one),
