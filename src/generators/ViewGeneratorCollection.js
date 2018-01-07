@@ -1,6 +1,6 @@
-const path = require('path')
-const fs = require('fs')
-const _ = require('lodash')
+const path = require('path');
+const fs = require('fs');
+const _ = require('lodash');
 
 let instance; // singleton hack
 
@@ -12,6 +12,18 @@ class ViewGeneratorCollection {
 
     this.viewGenerators = [];
     return instance;
+  }
+
+  /**
+   *
+   * @param pattern eg. -> triplePattern
+   * @param type
+   */
+  getGenerator (pattern, type = 'html') {
+    const ucFirstPattern = pattern.charAt(0).toUpperCase() + pattern.slice(1);
+    const typeToUpper = type.toUpperCase();
+    const name = `${ucFirstPattern}${typeToUpper}ViewGenerator`;
+    return this.viewGenerators[name];
   }
 
   instantiateAll () {
