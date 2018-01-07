@@ -64,3 +64,4 @@ data/*
 
 /src/views/*.js
 /src/views/*/*.js
+!/src/views/tripplePattern/utils.js
