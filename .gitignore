@@ -63,3 +63,4 @@ typings/
 data/*
 
 /src/views/*.js
+/src/views/*/*.js

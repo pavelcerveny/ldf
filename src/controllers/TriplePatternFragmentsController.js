@@ -6,13 +6,13 @@ const _ = require('lodash');
 let instance; // singleton hack
 
 class TriplePatternFragmentsController extends Controller {
-  constructor (config, logger) {
+  constructor (config, logger, viewsGeneratorCollection) {
     super(config, logger);
 
     if (!instance) {
       instance = this;
     }
-
+    this.viewsGeneratorCollection = viewsGeneratorCollection;
     return instance;
   }
 
@@ -58,8 +58,7 @@ class TriplePatternFragmentsController extends Controller {
 
     const metadata = this.createFragmentMetadata(request, query, datasourceSettings);
 
-    console.log(metadata);
-
+    const generator = this.viewsGeneratorCollection.getGenerator('triplePattern');
   }
 
   extractQuery (request) {

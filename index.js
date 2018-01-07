@@ -1,13 +1,14 @@
-'use strict';
-
-const LDFragmentServer = require('./src/LDFragmentServer');
-const ServerRouter = require('./src/ServerRouter');
 const fs = require('fs');
 const path = require('path');
-const Utils = require('./src/Utils');
-const IndexDatasource = require('./src/datasources/IndexDatasource');
 const _ = require('lodash');
 const deepmerge = require('deepmerge');
+
+const IndexDatasource = require('./src/datasources/IndexDatasource');
+const ViewGeneratorCollection = require('./src/generators/ViewGeneratorCollection');
+const LDFragmentServer = require('./src/LDFragmentServer');
+const ServerRouter = require('./src/ServerRouter');
+const Utils = require('./src/Utils');
+
 // const args = process.argv.slice(2);
 
 // if (args.length < 1 || args.length > 3 || /^--?h(elp)?$/.test(args[0])) {
@@ -73,8 +74,9 @@ Object.keys(datasources).forEach(function (datasourceName) {
       datasourceConfig.settings = _.defaults(datasourceConfig.settings || {}, config);
       if (!datasourceConfig.settings.blankNodePrefix) {
         datasourceConfig.settings.blankNodePrefix = blankNodePrefix + datasourcePath + '/';
-        if (blankNodePath)
+        if (blankNodePath) {
           config.dereference[blankNodePath + datasourcePath + '/'] = datasourcePath;
+        }
       }
       // Create the data source
       const typePath = path.join(path.resolve(__dirname, './src/datasources/'), datasourceConfig.type);
@@ -106,9 +108,12 @@ datasources[indexPath] = datasources[indexPath] || {
   datasource: new IndexDatasource({ datasources: datasources })
 };
 
+const viewGeneratorCol = new ViewGeneratorCollection();
+viewGeneratorCol.instantiateAll();
+
 const server = new LDFragmentServer(config);
 
-const router = new ServerRouter(config);
+const router = new ServerRouter(config, viewGeneratorCol);
 
 server.setRouter = router;
 server.createServer();

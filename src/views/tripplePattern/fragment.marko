@@ -1,0 +1,175 @@
+<!-- /* @license MIT ©2013-2016 Ruben Verborgh, Ghent University - imec */ -->
+
+/*
+    data: - inherited
+        - datasource -> concrete datasource on which is executed triple pattern
+        - query -> query itself
+            - features -> limit, offset, ...
+        - fragment -
+        - triples - fragment data
+        - metadata - data about fragment
+*/
+
+import { capitalizeFirst, shorten, formatNumber } from './utils';
+$ var datasource = input.datasource;
+
+<div resource="${datasource.url}" typeof="void:datasource hydra:Collection">
+<h2><a href="${datasource.url}">${capitalizeFirst(datasource.title)}</a></h2>
+
+<form action="?" method="GET" property="hydra:search" resource="#triplePattern">
+  <fieldset resource="#triplePattern">
+    <legend>Query ${datasource.title} by triple pattern</legend>
+    <span property="hydra:template" content="${datasource.templateUrl}" lang=""></span>
+    <span property="hydra:variableRepresentation" resource="hydra:ExplicitRepresentation"></span>
+    <ul>
+        $ var rdfParts = ['subject', 'predicate', 'object'];
+        <for (component in rdfParts)>
+            <li property="hydra:mapping" resource="#${component}">
+                <label for="${component}"
+                    about="#${component}" property="hydra:variable" lang="">${component}</label>
+            <input class="uri" id="${component}" name="${component}"
+                    about="#${component}" property="hydra:property"
+                    resource="rdf:${component}" value="${query[component] || ''}" />
+            </li>
+        </for>
+    </ul>
+  </fieldset>
+  <p>
+    <input type="submit" value="Find matching triples" />
+  </p>
+</form>
+</div>
+
+<!-- <%- extensions.Before} -->
+
+<h3>Matches in ${datasource.title} for <em class="pattern">${query.patternString}</em></h3>
+
+$ {
+    var totalEstimate = metadata.totalCount;
+    var offset = query.offset || 0;
+    var limit = query.limit || triples.length;
+    var start = offset + 1;
+    var end = offset + triples.length;
+    var hasPrev = offset > 0;
+    var hasNext = totalEstimate > end;
+    var subject = query.subject;
+    var predicate = query.predicate;
+    var object = query.object;
+}
+
+<div class="counts">
+    <if (triples.length)>
+        Showing triples ${formatNumber(start)} to ${formatNumber(end)} of
+        ${totalEstimate === end ? '' : '±'}
+        <span property="void:triples hydra:totalItems" datatype="xsd:integer" content="${totalEstimate}">
+            ${formatNumber(totalEstimate)}
+        </span>
+        with
+        <span property="hydra:itemsPerPage" datatype="xsd:integer" content="${limit}">
+            ${formatNumber(limit)}
+        </span> triples per page.
+
+        <if (hasPrev && hasNext)>
+            <ul class="links">
+                <if (hasPrev)>
+                    <li><a href="${fragment.firstPageUrl}" rel="first" property="hydra:first">first</a></li>
+                    <li><a href="${fragment.previousPageUrl}" rel="prev" property="hydra:previous">previous</a></li>
+                </if>
+                <if (hasNext)>
+                    <li><a href="${fragment.nextPageUrl}" rel="next" property="hydra:next">next</a></li>
+                </if>
+            </ul>
+        </if>
+    </if>
+    <else>
+    <p>
+        ${capitalizeFirst(datasource.title)} contains
+        <span property="void:triples hydra:totalItems" datatype="xsd:integer" content="0">
+        no
+        <if (totalEstimate > 0)>
+            more
+        </if>
+        </span>
+        triples that match this pattern.
+    </p>
+    </else>
+</div>
+
+<ul class="triples">
+<for (triple in triples)>
+    $ var subject = triple.subject;
+    $ var predicate = triple.predicate;
+    $ var object = triple.object;
+
+    <li>
+      <a href="?subject=${encodeURIComponent(subject)}">
+        <abbr title="${subject}">${shorten(subject)}</abbr>
+      </a>
+
+      <a href="?predicate=${encodeURIComponent(predicate)}">
+        <abbr title="${predicate}">${shorten(predicate)}</abbr>
+      </a>
+
+      <if (!N3Util.isLiteral(object))>
+        <a href="?object=${encodeURIComponent(object)}" resource="${subject}">
+            <abbr title="${object}" property="${predicate}" resource="${object}">
+                ${shorten(object)}
+            </abbr>
+        </a>.
+      </if>
+      <else>
+        $ var type = N3Util.getLiteralType(object);
+        $ var language = N3Util.getLiteralLanguage(object);
+
+      <a href="?object=${encodeURIComponent(object)}" resource="${subject}">
+        <if (!language)>
+            <span property="${predicate}" datatype="${type}">
+                ${N3Util.getLiteralValue(object)}
+            </span>
+        </if>
+        <else>
+            <span property="${predicate}" lang="${language}" xml:lang="${language}">
+                ${N3Util.getLiteralValue(object)}
+            </span>
+        </else>
+       </a>.
+      </else>
+    </li>
+</for>
+</ul>
+
+<if (hasPrev && hasNext)>
+  <ul class="links">
+    <if (hasPrev)>
+        <li><a href="${fragment.firstPageUrl}" rel="first" property="hydra:first">first</a></li>
+        <li><a href="${fragment.previousPageUrl}" rel="prev" property="hydra:previous">previous</a></li>
+    </if>
+    <if (hasNext)>
+        <li><a href="${fragment.nextPageUrl}" rel="next" property="hydra:next">next</a></li>
+    </if>
+  </ul>
+</if>
+
+<!-- <%- extensions.After} -->
+
+<if (datasource.description || datasource.copyright ||
+       datasource.license || datasource.licenseUrl)>
+    <aside id="about">
+        <h3>About ${datasource.title}</h3>
+        <ul>
+            <li><a href="${datasource.homepage || datasource.url}" target="_blank">${datasource.title}</a>
+                <if (datasource.description)> - ${datasource.description} </if>
+            </li>
+            <if (datasource.copyright)>
+                <li>${datasource.copyright}</li>
+            </if>
+            <if (datasource.license || datasource.licenseUrl)>
+                <li>
+                    <a href="${datasource.licenseUrl || '#'}" target="_blank">
+                        ${datasource.license || datasource.licenseUrl}
+                    </a>
+                </li>
+            </if>
+        </ul>
+    </aside>
+</if>

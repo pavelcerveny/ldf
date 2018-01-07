@@ -1,0 +1,36 @@
+/*
+    data: - inside "input"
+        - query
+            - features: array -> eg. ['limit', 'triplePattern', ... ]
+        - datasources: array -> eg.
+            [
+                name: dbpedia,
+                desc: test index datasource,
+                datasource: {IndexDatasource}, ... ]
+*/
+$ var rdf = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+$ var rdfs = 'http://www.w3.org/2000/01/rdf-schema#';
+$ var dc = 'http://purl.org/dc/terms/';
+$ var voID = 'http://rdfs.org/ns/void#';
+
+<if (!input.query.features.triplePattern)>
+    <div class="index">
+        <h2>Available datasets</h2>
+        <p>Browse the following datasets as <a href="http://linkeddatafragments.org/in-depth/#tpf">Triple Pattern Fragments</a>:</p>
+        <dl class="datasets">
+        $ var datasources = input.datasources;
+        <for (datasourceName in datasources)>
+        <!-- for render as foreach -> cannot use continue inside, only return -->
+            $ {
+                var datasource = datasources[datasourceName];
+                if (datasource.role === 'index' || datasource.hide) return;
+            }
+            <dt><a href="${datasource.url.replace(/#.*/, '')}">${datasource.title}</a></dt>
+            <dd>${datasource.description || ' '}</dd>
+        </for>
+        </dl>
+        <p>The current dataset <em class="dataset">index</em> contains metadata about these datasets.</p>
+    </div>
+</if>
+
+<include('./fragment', input.fragment)/>

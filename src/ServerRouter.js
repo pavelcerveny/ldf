@@ -7,17 +7,16 @@ const url = require('url');
 const _ = require('lodash');
 
 require('marko/node-require').install();
-const indexTemplate = require('./views/index.marko');
 
 const PLAINTEXT = 'text/plain;charset=utf-8';
 
 class ServerRouter {
-  constructor (config) {
+  constructor (config, viewsGeneratorCollection) {
     this.router = new Router({});
     this.config = config;
     this.logger = this.config.logging.logger;
     this.controllers = {
-      TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger),
+      TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger, viewsGeneratorCollection),
       AssetsController: new AssetsController(this.config, this.logger),
       DereferenceController: new DereferenceController(this.config, this.logger)
     };
@@ -67,11 +66,6 @@ class ServerRouter {
      * TODO: think of better solution
      */
     this.router.get('/*', (req, res, params) => {
-      indexTemplate.render({
-        assetsPath: 'assets',
-        baseURL: '/',
-        header: ''
-      }, res);
       this.controllers.TriplePatternFragmentsController.handle(this.parseUrlAndHeaders(req), res, () => {});
     });
 
@@ -98,7 +92,7 @@ class ServerRouter {
       { protocol: 'http:', host: request.headers.host });
 
     const requestUrl = request.parsedUrl;
-    
+
     request.requestUrl = {
       origQuery: request.url.replace(/[^?]+/, ''),
       pageUrl: url.format(requestUrl).replace(/\?.*/, request.requestUrl.origQuery),
@@ -109,8 +103,7 @@ class ServerRouter {
       fragmentPageUrlBase: request.requestUrl.fragmentUrl + (/\?/.test(request.requestUrl.fragmentUrl) ? '&' : '?') + 'page=',
       indexUrl: url.format(_.omit(requestUrl, 'search', 'query', 'pathname')) + '/'
     };
-      // maintain the originally requested query string to avoid encoding differences
-
+    // maintain the originally requested query string to avoid encoding differences
 
     return request;
   }
