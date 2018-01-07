@@ -10,7 +10,7 @@ class ViewGeneratorCollection {
       instance = this;
     }
 
-    this.viewGenerators = [];
+    this.viewGenerators = {};
     return instance;
   }
 
@@ -23,7 +23,11 @@ class ViewGeneratorCollection {
     const ucFirstPattern = pattern.charAt(0).toUpperCase() + pattern.slice(1);
     const typeToUpper = type.toUpperCase();
     const name = `${ucFirstPattern}${typeToUpper}ViewGenerator`;
-    return this.viewGenerators[name];
+    for (const [key, inst] of Object.entries(this.viewGenerators)) {
+      if (key === name) {
+        return inst;
+      }
+    }
   }
 
   instantiateAll () {
@@ -31,7 +35,8 @@ class ViewGeneratorCollection {
 
     files.forEach((filename) => {
       const Constructor = require(filename);
-      this.viewGenerators.push(new Constructor());
+      const object = new Constructor();
+      this.viewGenerators[object.constructor.name] = object;
     });
   }
 

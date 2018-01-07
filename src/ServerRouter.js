@@ -85,24 +85,26 @@ class ServerRouter {
       return value && !/^(?:href|path|search|hash)$/.test(key) ? value : undefined;
     });
 
-    request.parsedUrl = _.defaults(_.pick(url.parse(request.url, true), 'path', 'pathname', 'query'),
-      this._baseUrl,
-      ServerRouter.getForwardedHeaders(request),
-      ServerRouter.getXForwardedHeaders(request),
-      { protocol: 'http:', host: request.headers.host });
+    if (!request.parsedUrl) {
+      request.parsedUrl = _.defaults(_.pick(url.parse(request.url, true), 'path', 'pathname', 'query'),
+        this._baseUrl,
+        ServerRouter.getForwardedHeaders(request),
+        ServerRouter.getXForwardedHeaders(request),
+        { protocol: 'http:', host: request.headers.host });
+    }
 
     const requestUrl = request.parsedUrl;
 
-    request.requestUrl = {
-      origQuery: request.url.replace(/[^?]+/, ''),
-      pageUrl: url.format(requestUrl).replace(/\?.*/, request.requestUrl.origQuery),
-      paramsNoPage: _.omit(requestUrl.query, 'page'),
-      currentPage: parseInt(requestUrl.query.page, 10) || 1,
-      datasourceUrl: url.format(_.omit(requestUrl, 'query')),
-      fragmentUrl: url.format(_.defaults({query: request.requestUrl.paramsNoPage}, requestUrl)),
-      fragmentPageUrlBase: request.requestUrl.fragmentUrl + (/\?/.test(request.requestUrl.fragmentUrl) ? '&' : '?') + 'page=',
-      indexUrl: url.format(_.omit(requestUrl, 'search', 'query', 'pathname')) + '/'
-    };
+    request.requestUrl = {};
+    request.requestUrl.origQuery = request.url.replace(/[^?]+/, '');
+    request.requestUrl.pageUrl = url.format(requestUrl).replace(/\?.*/, request.requestUrl.origQuery);
+    request.requestUrl.paramsNoPage = _.omit(requestUrl.query, 'page');
+    request.requestUrl.currentPage = parseInt(requestUrl.query.page, 10) || 1;
+    request.requestUrl.datasourceUrl = url.format(_.omit(requestUrl, 'query'));
+    request.requestUrl.fragmentUrl = url.format(_.defaults({query: request.requestUrl.paramsNoPage}, requestUrl));
+    request.requestUrl.fragmentPageUrlBase = request.requestUrl.fragmentUrl + (/\?/.test(request.requestUrl.fragmentUrl) ? '&' : '?') + 'page=';
+    request.requestUrl.indexUrl = url.format(_.omit(requestUrl, 'search', 'query', 'pathname')) + '/';
+
     // maintain the originally requested query string to avoid encoding differences
 
     return request;

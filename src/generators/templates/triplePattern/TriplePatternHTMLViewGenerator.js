@@ -1,4 +1,5 @@
 require('marko/node-require').install();
+const N3Util = require('n3').Util;
 const indexDatasource = require('../../../views/tripplePattern/indexDatasource.marko');
 const datasource = require('../../../views/tripplePattern/datasource.marko');
 const layout = require('../../../views/layout.marko');
@@ -19,27 +20,32 @@ class TriplePatternHTMLViewGenerator {
    * @param settings
    * @param request
    * @param response
-   * @param done
    */
-  render (settings, request, response, done) {
+  render (settings, request, response) {
     // Read the data and metadata
     settings.triples = [];
 
     // BufferIterator
-    let results = settings.results;
+    let results = settings.result;
 
-    results.on('data', function (triple) {
+    results.on('data', (triple) => {
       settings.triples.push(triple);
     });
-    results.on('end', function () {
+    results.on('end', () => {
       settings.metadata && this.renderHTML(settings, request, response);
     });
-    results.getProperty('metadata', function (metadata) {
+    results.getProperty('metadata', (metadata) => {
       settings.metadata = metadata;
       results.ended && this.renderHTML(settings, request, response);
     });
   }
 
+  /**
+   *
+   * @param settings
+   * @param request
+   * @param response
+   */
   renderHTML (settings, request, response) {
     let basics = {
       assetsPath: 'assets',
@@ -48,15 +54,27 @@ class TriplePatternHTMLViewGenerator {
       component: null
     };
 
-    if (this.settings.datasource.role === 'index') {
+    if (settings.datasource.role === 'index') {
       basics.component = indexDatasource;
     } else {
       basics.component = datasource;
     }
 
+    const fragment = {
+      datasource: settings.datasource,
+      query: settings.query,
+      metadata: settings.metadata,
+      fragment: settings.metadata.fragment,
+      triples: settings.triples,
+      N3Util
+    };
+
     layout.render({
       ...basics,
-      ...settings
+      data: {
+        ...settings,
+        fragment
+      }
     }, response);
   }
 }

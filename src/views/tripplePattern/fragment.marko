@@ -12,6 +12,11 @@
 
 import { capitalizeFirst, shorten, formatNumber } from './utils';
 $ var datasource = input.datasource;
+$ var query = input.query;
+$ var fragment = input.fragment;
+$ var triples = input.triples;
+$ var metadata = input.metadata;
+$ var N3Util = input.N3Util;
 
 <div resource="${datasource.url}" typeof="void:datasource hydra:Collection">
 <h2><a href="${datasource.url}">${capitalizeFirst(datasource.title)}</a></h2>
