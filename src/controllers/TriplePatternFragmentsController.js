@@ -59,10 +59,13 @@ class TriplePatternFragmentsController extends Controller {
 
     const metadata = this.createFragmentMetadata(request, query, datasourceSettings);
 
-    const generator = this.viewsGeneratorCollection.getGenerator('triplePattern');
+    const matchedGenerator = this.viewsGeneratorCollection.matchGenerator('triplePattern', request);
+    const generator = this.viewsGeneratorCollection.getGenerator(matchedGenerator);
+
     const settings = {
       result,
       metadata,
+      fragment: metadata.fragment,
       datasource: datasourceSettings,
       query
     };

@@ -1,13 +1,16 @@
 require('marko/node-require').install();
 const N3Util = require('n3').Util;
+const HTMLViewGenerator = require('../../HTMLViewGenerator');
 const indexDatasource = require('../../../views/tripplePattern/indexDatasource.marko');
 const datasource = require('../../../views/tripplePattern/datasource.marko');
 const layout = require('../../../views/layout.marko');
 
 let instance = null;
 
-class TriplePatternHTMLViewGenerator {
+class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
   constructor () {
+    super('triplePattern');
+
     if (!instance) {
       instance = this;
     }
@@ -64,7 +67,7 @@ class TriplePatternHTMLViewGenerator {
       datasource: settings.datasource,
       query: settings.query,
       metadata: settings.metadata,
-      fragment: settings.metadata.fragment,
+      fragment: settings.fragment,
       triples: settings.triples,
       N3Util
     };

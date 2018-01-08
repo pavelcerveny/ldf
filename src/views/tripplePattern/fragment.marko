@@ -50,7 +50,7 @@ $ var N3Util = input.N3Util;
 <h3>Matches in ${datasource.title} for <em class="pattern">${query.patternString}</em></h3>
 
 $ {
-    var totalEstimate = metadata.totalCount;
+    var totalEstimate = metadata.totalCount || 0;
     var offset = query.offset || 0;
     var limit = query.limit || triples.length;
     var start = offset + 1;
@@ -74,7 +74,7 @@ $ {
             ${formatNumber(limit)}
         </span> triples per page.
 
-        <if (hasPrev && hasNext)>
+        <if (hasPrev || hasNext)>
             <ul class="links">
                 <if (hasPrev)>
                     <li><a href="${fragment.firstPageUrl}" rel="first" property="hydra:first">first</a></li>
@@ -143,7 +143,7 @@ $ {
 </for>
 </ul>
 
-<if (hasPrev && hasNext)>
+<if (hasPrev || hasNext)>
   <ul class="links">
     <if (hasPrev)>
         <li><a href="${fragment.firstPageUrl}" rel="first" property="hydra:first">first</a></li>

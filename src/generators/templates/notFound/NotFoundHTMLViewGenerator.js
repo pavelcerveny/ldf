@@ -1,8 +1,9 @@
-
+const HTMLViewGenerator = require('../../HTMLViewGenerator');
 let instance = null;
 
-class NotFoundHTMLViewGenerator {
+class NotFoundHTMLViewGenerator extends HTMLViewGenerator {
   constructor () {
+    super('notFound');
     if (!instance) {
       instance = this;
     }
