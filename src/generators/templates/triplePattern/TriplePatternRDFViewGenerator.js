@@ -17,19 +17,22 @@ class TriplePatternRDFViewGenerator extends RDFViewGenerator {
     return instance;
   }
 
-  render (settings, request, response) {
-
+  render (settings, request, response, done) {
+    const newSettings = this.getWriter(settings, request, response, done);
+    const writer = newSettings.writer;
+    this.renderRDF(newSettings, writer.data, writer.meta, writer.end);
   }
 
   renderRDF (settings, data, metadata, done) {
     const datasource = settings.datasource;
     const fragment = settings.fragment;
     const query = settings.query;
-    const results = settings.results;
+    const results = settings.result;
     let metadataDone = false;
 
     // Add data source metadata
     metadata(datasource.index, hydra + 'member', datasource.url);
+
     metadata(datasource.url, rdf + 'type', voID + 'Dataset');
     metadata(datasource.url, rdf + 'type', hydra + 'Collection');
     metadata(datasource.url, voID + 'subset', fragment.pageUrl);
@@ -53,6 +56,7 @@ class TriplePatternRDFViewGenerator extends RDFViewGenerator {
 
     // Add fragment metadata
     results.getProperty('metadata', function (meta) {
+
       // General fragment metadata
       metadata(fragment.url, voID + 'subset', fragment.pageUrl);
       metadata(fragment.pageUrl, rdf + 'type', hydra + 'PartialCollectionView');

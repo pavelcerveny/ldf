@@ -70,9 +70,12 @@ class TriplePatternFragmentsController extends Controller {
       query
     };
     // console.log(settings);
-
-    generator.render(settings, request, response);
-
+    generator.render(settings, request, response, (error) => {
+      if (error) {
+        response.emit('error', error);
+      }
+      response.end();
+    });
     return response;
   }
 
