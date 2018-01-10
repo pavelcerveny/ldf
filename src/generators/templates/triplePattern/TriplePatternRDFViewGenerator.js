@@ -18,6 +18,9 @@ class TriplePatternRDFViewGenerator extends RDFViewGenerator {
   }
 
   render (settings, request, response, done) {
+    if (!settings.contentType) {
+      settings.contentType = response.getHeader('Content-Type');
+    }
     const newSettings = this.getWriter(settings, request, response, done);
     const writer = newSettings.writer;
     this.renderRDF(newSettings, writer.data, writer.meta, writer.end);

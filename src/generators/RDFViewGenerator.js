@@ -98,12 +98,12 @@ class RDFViewGenerator extends ViewGenerator {
           g = '@default';
         }
         let graph = quads[g] || (quads[g] = []);
-        graph.push(this.toJsonLdTriple(s, p, o));
+        graph.push(RDFViewGenerator.toJsonLdTriple(s, p, o));
       },
       // Adds the metadata triple to the output
       meta: function (s, p, o) {
         if (s && p && o && !N3.Util.isLiteral(s)) {
-          metadata.push(this.toJsonLdTriple(s, p, o));
+          metadata.push(RDFViewGenerator.toJsonLdTriple(s, p, o));
         }
       },
       // Ends the output and flushes the stream
@@ -120,7 +120,7 @@ class RDFViewGenerator extends ViewGenerator {
   }
 
   // Converts a triple to the JSON-LD library representation
-  toJsonLdTriple (subject, predicate, object) {
+  static toJsonLdTriple (subject, predicate, object) {
     return {
       subject:   { value: subject,   type: subject[0]   !== '_' ? 'IRI' : 'blank node' },
       predicate: { value: predicate, type: predicate[0] !== '_' ? 'IRI' : 'blank node' },

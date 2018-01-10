@@ -13,7 +13,8 @@
   "rules": {
     "new-cap": 0,
     // test constructors as regular functions
-    "max-nested-callbacks": 0
+    "max-nested-callbacks": 0,
     // Mocha works with deeply nested callbacks
+    "key-spacing": 0
   }
 }
