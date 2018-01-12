@@ -1,4 +1,5 @@
 const ErrorController = require('./controllers/ErrorController');
+const NotFoundController = require('./controllers/NotFoundController');
 const AssetsController = require('./controllers/AssetsController');
 const DereferenceController = require('./controllers/DereferenceController');
 const TriplePatternFragmentsController = require('./controllers/TriplePatternFragmentsController');
@@ -20,7 +21,7 @@ class ServerRouter {
     this.router = new Router({});
     /**
      * All config data
-     * loaded from config/config.json file and other which are added later
+     * loaded from config.json file and other which are added later
      * @type {object}
      */
     this.config = config;
@@ -39,7 +40,8 @@ class ServerRouter {
       TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger, viewsGeneratorCollection),
       AssetsController: new AssetsController(this.config, this.logger),
       DereferenceController: new DereferenceController(this.config, this.logger),
-      ErrorController: new ErrorController(this.config, this.logger)
+      ErrorController: new ErrorController(this.config, this.logger),
+      NotFoundController: new NotFoundController(this.config, this.logger)
     };
 
     // sets all routes, which are defined below
@@ -89,7 +91,21 @@ class ServerRouter {
      * NOTE: think of better solution
      */
     this.router.get('/*', (req, res, params) => {
-      this.controllers.TriplePatternFragmentsController.handle(this.parseUrlAndHeaders(req), res, this.reportError);
+      req = this.parseUrlAndHeaders(req);
+
+      const next = (message) => {
+        if (message instanceof Error) {
+          this.reportError(req, res, message);
+        } else {
+          if (message === 'handleNotFound') {
+            this.controllers.NotFoundController.handle(req, res, next);
+          } else if (message === 'handleNotAcceptable') {
+            ServerRouter.handleNotAcceptable(res);
+          }
+        }
+      };
+
+      this.controllers.TriplePatternFragmentsController.handle(req, res, next);
     });
 
     /**
@@ -189,6 +205,16 @@ class ServerRouter {
   }
 
   /**
+   * Handling no view found
+   * @param request
+   * @param {Response} response
+   */
+  static handleNotFound (request, response) {
+    response.writeHead(404, { 'Content-Type': PLAINTEXT });
+    response.end(request.url + ' not found\n');
+  };
+
+  /**
    * Handling errors
    * @param request
    * @param response
@@ -205,7 +231,7 @@ class ServerRouter {
         return response.end();
       }
       response.error = error;
-      this.controllers.ErrorController.handleRequest(request, response, _.noop);
+      this.controllers.ErrorController.handle(request, response, _.noop);
     } catch (responseError) {
       this.logger.error(responseError.stack);
     }
@@ -216,13 +242,6 @@ class ServerRouter {
    */
   stop () {
     // Close all controllers
-    this.controllers.forEach((controller) => {
-      try {
-        controller.close && controller.close();
-      } catch (error) {
-        this.logger.error(error);
-      }
-    });
   };
 }
 

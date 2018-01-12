@@ -19,7 +19,7 @@ class TriplePatternFragmentsController extends Controller {
    * Handling incoming requests
    * @param request
    * @param response
-   * @param next - handling errors
+   * @param next - handling errors and other
    * @return {Response}
    */
   handle (request, response, next) {
@@ -54,7 +54,7 @@ class TriplePatternFragmentsController extends Controller {
     };
 
     if (!datasourceSettings.datasource.supportsQuery(query)) {
-      // TODO: error controller
+      next(new Error('Datasource does not support given query!'));
     }
 
     const result = datasourceSettings.datasource.select(query, (error) => {
@@ -63,8 +63,8 @@ class TriplePatternFragmentsController extends Controller {
 
     const metadata = this.createFragmentMetadata(request, query, datasourceSettings);
 
-    const matchedGenerator = this.viewsGeneratorCollection.matchGenerator('triplePattern', request);
-    const generator = this.viewsGeneratorCollection.getGenerator(matchedGenerator);
+    const matchedGenerator = this.viewsGeneratorCollection.matchGenerator('triplePattern', request, next);
+    const generator = this.viewsGeneratorCollection.getGenerator(matchedGenerator, next);
 
     const settings = {
       result,

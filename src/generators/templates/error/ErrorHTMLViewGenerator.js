@@ -1,10 +1,10 @@
 const HTMLViewGenerator = require('../../HTMLViewGenerator');
-const notFoundComp = require('../../../views/notFound/notFound.marko');
+const errorComp = require('../../../views/error/error.marko');
 let instance = null;
 
-class NotFoundHTMLViewGenerator extends HTMLViewGenerator {
+class ErrorHTMLViewGenerator extends HTMLViewGenerator {
   constructor () {
-    super('notFound');
+    super('error');
     if (!instance) {
       instance = this;
     }
@@ -13,7 +13,7 @@ class NotFoundHTMLViewGenerator extends HTMLViewGenerator {
   }
 
   render (settings, request, response) {
-    this.basics.component = notFoundComp;
+    this.basics.component = errorComp;
 
     this.renderLayout({
       ...settings,
@@ -22,4 +22,4 @@ class NotFoundHTMLViewGenerator extends HTMLViewGenerator {
   }
 }
 
-module.exports = NotFoundHTMLViewGenerator;
+module.exports = ErrorHTMLViewGenerator;

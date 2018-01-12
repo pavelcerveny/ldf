@@ -17,36 +17,25 @@ class ViewGeneratorCollection {
     return instance;
   }
 
-  // getGenerator (pattern, type = 'html') {
-  //   const ucFirstPattern = pattern.charAt(0).toUpperCase() + pattern.slice(1);
-  //   const typeToUpper = type.toUpperCase();
-  //   const name = `${ucFirstPattern}${typeToUpper}ViewGenerator`;
-  //   for (const [key, inst] of Object.entries(this.viewGenerators)) {
-  //     if (key === name) {
-  //       return inst;
-  //     }
-  //   }
-  // }
-
-  getGenerator (matchedGen) {
+  getGenerator (matchedGen, next) {
     if (matchedGen.generator.length) {
       return this.viewGenerators[matchedGen.generator];
     } else {
-      // TODO: return error
+      next('handleNotFound');
     }
   }
 
-  matchGenerator (name, request) {
+  matchGenerator (name, request, next) {
     // Retrieve all possible content types for specific template generator name
     const generatorList = this.viewGeneratorsContentType[name];
 
     if (!generatorList || !generatorList.length) {
-      // TODO: return error
+      next('handleNotAcceptable');
     }
     // Negotiate the view best matching the request's requirements
     const generatorDetails = negotiate.choose(generatorList, request)[0];
     if (!generatorDetails) {
-      // TODO: return error
+      next('handleNotFound');
     }
 
     return generatorDetails;

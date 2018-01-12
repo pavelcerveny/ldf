@@ -1,9 +1,7 @@
-require('marko/node-require').install();
 const N3Util = require('n3').Util;
 const HTMLViewGenerator = require('../../HTMLViewGenerator');
 const indexDatasource = require('../../../views/tripplePattern/indexDatasource.marko');
 const datasource = require('../../../views/tripplePattern/datasource.marko');
-const layout = require('../../../views/layout.marko');
 
 let instance = null;
 
@@ -50,17 +48,10 @@ class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
    * @param response
    */
   renderHTML (settings, request, response) {
-    let basics = {
-      assetsPath: 'assets',
-      baseURL: '/',
-      header: '',
-      component: null
-    };
-
     if (settings.datasource.role === 'index') {
-      basics.component = indexDatasource;
+      this.basics.component = indexDatasource;
     } else {
-      basics.component = datasource;
+      this.basics.component = datasource;
     }
 
     const fragment = {
@@ -72,8 +63,8 @@ class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
       N3Util
     };
 
-    layout.render({
-      ...basics,
+    this.renderLayout({
+      ...this.basics,
       data: {
         ...settings,
         fragment

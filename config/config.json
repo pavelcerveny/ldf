@@ -2,6 +2,9 @@
   "title": "Linked Data Fragments server",
   "baseURL": "/",
 
+  "debug": true,
+  "logging": { "enabled": true },
+
   "port": 3000,
   "workers": 1,
 
@@ -49,7 +52,5 @@
       "cert": "config/certs/localhost-server.crt",
       "ca": [ "config/certs/localhost-ca.crt" ]
     }
-  },
-
-  "logging": { "enabled": true }
+  }
 }

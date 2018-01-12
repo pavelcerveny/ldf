@@ -16,14 +16,21 @@ class DereferenceController extends Controller {
     return instance;
   }
 
-  handle (req, res) {
+  /**
+   * Handling incoming requests
+   * @param request
+   * @param response
+   * @param next - handling errors and other
+   * @return {Response}
+   */
+  handle (request, response, next) {
     const entity = url.format(_.defaults({
-      pathname: '/' + req.dereference,
-      query: { subject: url.format(req.parsedUrl) }
-    }, req.parsedUrl));
+      pathname: '/' + request.dereference,
+      query: { subject: url.format(request.parsedUrl) }
+    }, request.parsedUrl));
 
-    res.writeHead(303, { 'Location': entity, 'Content-Type': PLAINTEXT });
-    res.end(entity);
+    response.writeHead(303, { 'Location': entity, 'Content-Type': PLAINTEXT });
+    response.end(entity);
   }
 }
 

@@ -17,7 +17,14 @@ class AssetsController extends Controller {
     return instance;
   }
 
-  handle (req, res) {
+  /**
+   * Handling incoming requests
+   * @param req
+   * @param res
+   * @param next - handling errors and other
+   * @return {Response}
+   */
+  handle (req, res, next) {
     const parsedUrl = url.parse(req.url);
     // extract URL path
     let pathname = `.${parsedUrl.pathname}`;

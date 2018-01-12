@@ -21,8 +21,15 @@ const customConfig = JSON.parse(fs.readFileSync(path.join(__dirname, './config/c
 
 let config = deepmerge(defaultConfig, customConfig);
 
-// TODO: set default logger
-this.config.logger = {};
+const noop = () => {};
+
+// default fake logger
+this.config.logger = {
+  info: noop,
+  error: noop,
+  warn: noop,
+  debug: noop
+};
 
 if (config.logging.enabled) {
   const winston = require('winston');
@@ -37,15 +44,14 @@ if (config.logging.enabled) {
       new (winston.transports.Console)({
         timestamp: tsFormat,
         colorize: true,
-        level: 'info'
+        level: config.debug ? 'verbose' : 'info'
       }),
       new (require('winston-daily-rotate-file'))({
         filename: `${config.logging.folder}/-results.log`,
         timestamp: tsFormat,
         datePattern: 'yyyy-MM-dd',
         prepend: true,
-        level: 'verbose'
-        // level: env === 'development' ? 'verbose' : 'info'
+        level: config.debug ? 'verbose' : 'info'
       })
     ]
   });

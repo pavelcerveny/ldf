@@ -1,5 +1,3 @@
-'use strict';
-
 const http = require('http');
 
 class LDFragmentServer {
@@ -14,6 +12,9 @@ class LDFragmentServer {
     this.router = router;
   }
 
+  /**
+   * Starts the server and set up router for matching
+   */
   createServer () {
     // TODO: add https variant
     // TODO: add sockets
@@ -42,9 +43,10 @@ class LDFragmentServer {
     });
   }
 
+  /**
+   * Stops server and router
+   */
   stopServer () {
-    // Close all controllers
-
     this.router.stop();
     this.server.close();
   }

@@ -1,7 +1,4 @@
-const url = require('url');
-const _ = require('lodash');
 const Controller = require('./Controller');
-const PLAINTEXT = 'text/plain;charset=utf-8';
 
 let instance; // singleton hack
 
@@ -16,12 +13,31 @@ class NotFoundController extends Controller {
     return instance;
   }
 
-  handle (request, response) {
-    // response.setHeader('Cache-Control', 'public,max-age=3600');
-    // const view = this._negotiateView('NotFound', request, response),
-    //   metadata = { url: request.url, prefixes: this._prefixes, datasources: this._datasources };
-    // response.writeHead(404);
-    // view.render(metadata, request, response);
+  /**
+   * Handling incoming requests
+   * @param request
+   * @param response
+   * @param next - handling errors and other
+   * @return {Response}
+   */
+  handle (request, response, next) {
+    response.setHeader('Cache-Control', 'public,max-age=3600');
+    response.writeHead(404);
+
+    const metadata = {
+      url: request.url,
+      prefixes: this.prefixes,
+      datasources: this.datasources
+    };
+
+    const matchedGenerator = this.viewsGeneratorCollection.matchGenerator('notFound', request, next);
+    const generator = this.viewsGeneratorCollection.getGenerator(matchedGenerator, next);
+
+    generator.render(metadata, request, response, (error) => {
+      next(error);
+    });
+
+    return response;
   }
 }
 
