@@ -1,5 +1,4 @@
 const Controller = require('./Controller');
-const url = require('url');
 const N3Util = require('n3').Util;
 const _ = require('lodash');
 
@@ -16,6 +15,13 @@ class TriplePatternFragmentsController extends Controller {
     return instance;
   }
 
+  /**
+   * Handling incoming requests
+   * @param request
+   * @param response
+   * @param next - handling errors
+   * @return {Response}
+   */
   handle (request, response, next) {
     const extractedFeatures = this.extractFeatures(request);
     const datasource = this.extractDatasource(request);
@@ -47,14 +53,12 @@ class TriplePatternFragmentsController extends Controller {
       ...triplePattern
     };
 
-
     if (!datasourceSettings.datasource.supportsQuery(query)) {
       // TODO: error controller
     }
 
     const result = datasourceSettings.datasource.select(query, (error) => {
-      // TODO: error controller
-      console.log(error);
+      next(error);
     });
 
     const metadata = this.createFragmentMetadata(request, query, datasourceSettings);
@@ -71,19 +75,22 @@ class TriplePatternFragmentsController extends Controller {
     };
     // console.log(settings);
     generator.render(settings, request, response, (error) => {
-      if (error) {
-        response.emit('error', error);
-      }
-      response.end();
+      next(error);
     });
     return response;
   }
 
+  /**
+   * Extracts query parameters from URL
+   * @param request
+   * @return {{subject: string|null, predicate: string|null, object: string|null}}
+   */
   extractQuery (request) {
     const iriMatcher = /^(<?)([^_?$"<>][^"<>]*)>?$/;
     const literalMatcher = /^("[^]*")(?:|\^\^<?([^"<>]+)>?|@[a-z0-9-]+)$/i;
 
     const query = request.parsedUrl.query;
+
     let triplePatternData = {
       subject: null,
       predicate: null,
@@ -118,7 +125,13 @@ class TriplePatternFragmentsController extends Controller {
     return triplePatternData;
   }
 
+  /**
+   * Extends prefix with full IRI defined in config
+   * @param name
+   * @return {string}
+   */
   expandIRI (name) {
+    // TODO: comment
     const prefixedNameMatcher = /^([a-z0-9-]*):([^/#:]*)$/i;
     const match = prefixedNameMatcher.exec(name);
     let prefix = null;
@@ -126,6 +139,11 @@ class TriplePatternFragmentsController extends Controller {
     return match && (prefix = this.prefixes[match[1]]) ? prefix + match[2] : name;
   }
 
+  /**
+   * Extract name of datasource from query
+   * @param request
+   * @return {string}
+   */
   extractDatasource (request) {
     let datasource = /^\/?(.*)$/.exec(request.parsedUrl.pathname || '');
     datasource = datasource[1];
@@ -134,6 +152,8 @@ class TriplePatternFragmentsController extends Controller {
 
   /**
    * Extract limit and offset, if possible from url query
+   * @param request
+   * @return {{features: {limit: boolean}, limit: number, offset: number}}
    */
   extractFeatures (request) {
     let limit = 100;
@@ -166,10 +186,25 @@ class TriplePatternFragmentsController extends Controller {
     };
   }
 
+  /**
+   * Creates metadata about the fragment
+   * @param request
+   * @param query (subject, predicate, object)
+   * @param datasourceSettings
+   * @return {
+   *    {
+   *      datasource : {index: string, url: string, templateUrl: string},
+   *      fragment:
+   *        {url: string, pageUrl: string, firstPageUrl: string, nextPageUrl: string, previousPageUrl: string|null},
+   *      query: {subject: string, predicate: string, object: string},
+   *      prefixes: {prefixName: string},
+   *      datasources: [object] }}
+   */
   createFragmentMetadata (request, query, datasourceSettings) {
     const requestUrl = request.requestUrl;
 
     // Generate a textual representation of the pattern
+    // eg. '{ ?s ?p ?o }' or '{ <subject> <predicate> <object> }'
     query.patternString = '{ ' +
       (query.subject ? '<' + query.subject + '> ' : '?s ') +
       (query.predicate ? '<' + query.predicate + '> ' : '?p ') +
@@ -179,7 +214,7 @@ class TriplePatternFragmentsController extends Controller {
       datasource: _.assign(_.omit(datasourceSettings, 'datasource'), {
         index: requestUrl.indexUrl + '#dataset',
         url: requestUrl.datasourceUrl + '#dataset',
-        templateUrl: requestUrl.datasourceUrl + '{?subject,predicate,object}',
+        templateUrl: requestUrl.datasourceUrl + '{?subject,predicate,object}'
       }),
       fragment: {
         url: requestUrl.fragmentUrl,
@@ -192,14 +227,6 @@ class TriplePatternFragmentsController extends Controller {
       prefixes: this.prefixes,
       datasources: this.datasources
     };
-  }
-
-  renderHTML () {
-
-  }
-
-  renderRDF () {
-
   }
 }
 

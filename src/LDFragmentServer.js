@@ -16,31 +16,36 @@ class LDFragmentServer {
 
   createServer () {
     // TODO: add https variant
+    // TODO: add sockets
     this.server = http.createServer();
 
     this.server.on('request', (req, res) => {
-      // execute parsing
-      // add default headers from config
       this.logger.info(`New request - pathname: ${req.url}`);
-      this.router.getRouter(req, res, this.logger);
-      // this.router.handleRoutes(req, res);
+      // execute router matching
+      this.router.getRouter(req, res);
     });
 
-    this.server.on('error', (req, res) => {
-
+    this.server.on('error', (request, response, error) => {
+      // If no request or response is available, the server failed outside of a request; don't recover
+      request = null;
+      response = null;
+      this.logger.error(`Fatal error, exiting process:\n ${error.stack}`);
+      return process.exit(-1);
     });
 
-    this.server.listen(3000, err => {
-      if (err) throw err;
-      console.log('Server listening on: http://localhost:3000')
+    this.server.listen(3000, error => {
+      if (error) {
+        this.logger.error(`Fatal error, exiting process:\n ${error.stack}`);
+        return process.exit(-1);
+      }
+      this.logger.info(`Server listening on: http://localhost:3000`);
     });
-  }
-
-  reportError (request, response, error) {
-
   }
 
   stopServer () {
+    // Close all controllers
+
+    this.router.stop();
     this.server.close();
   }
 }

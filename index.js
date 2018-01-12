@@ -7,8 +7,8 @@ const IndexDatasource = require('./src/datasources/IndexDatasource');
 const ViewGeneratorCollection = require('./src/generators/ViewGeneratorCollection');
 const LDFragmentServer = require('./src/LDFragmentServer');
 const ServerRouter = require('./src/ServerRouter');
-const Utils = require('./src/Utils');
 
+// TODO: parse command line arguments
 // const args = process.argv.slice(2);
 
 // if (args.length < 1 || args.length > 3 || /^--?h(elp)?$/.test(args[0])) {
@@ -21,7 +21,8 @@ const customConfig = JSON.parse(fs.readFileSync(path.join(__dirname, './config/c
 
 let config = deepmerge(defaultConfig, customConfig);
 
-config.logging.logger = console.log;
+// TODO: set default logger
+this.config.logger = {};
 
 if (config.logging.enabled) {
   const winston = require('winston');
@@ -51,7 +52,7 @@ if (config.logging.enabled) {
 }
 
 const baseURL = config.baseURL = config.baseURL.replace(/\/?$/, '/');
-const baseURLRoot = baseURL.match(/^(?:https?:\/\/[^\/]+)?/)[0];
+const baseURLRoot = baseURL.match(/^(?:https?:\/\/[^/]+)?/)[0];
 const baseURLPath = baseURL.substr(baseURLRoot.length);
 const blankNodePath = baseURLRoot ? '/.well-known/genid/' : '';
 const blankNodePrefix = blankNodePath ? baseURLRoot + blankNodePath : 'genid:';
@@ -109,6 +110,8 @@ datasources[indexPath] = datasources[indexPath] || {
 };
 
 const viewGeneratorCol = new ViewGeneratorCollection();
+
+// load all view generators
 viewGeneratorCol.instantiateAll();
 
 const server = new LDFragmentServer(config);
@@ -118,20 +121,6 @@ const router = new ServerRouter(config, viewGeneratorCol);
 server.setRouter = router;
 server.createServer();
 
-// determine ssl certificates usage
+server.stopServer();
 
-// start cluster ?
-
-// configure url -> if we don't use proxy - which we will
-
-// create and load data sources
-
-// create index data source
-
-// config routes / views / controllers / assets
-
-// set up logging
-
-// create server
-
-// stop server / kill workers
+// TODO: ssl, cluster, run application in cluster workers

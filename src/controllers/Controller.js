@@ -7,7 +7,7 @@ class Controller {
     this.datasources = this.config.datasources;
   }
 
-  handle (request, response) {
+  handle (request, response, next) {
     console.log('abstract method');
   }
 }

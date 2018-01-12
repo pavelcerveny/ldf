@@ -1,3 +1,4 @@
+const ErrorController = require('./controllers/ErrorController');
 const AssetsController = require('./controllers/AssetsController');
 const DereferenceController = require('./controllers/DereferenceController');
 const TriplePatternFragmentsController = require('./controllers/TriplePatternFragmentsController');
@@ -12,15 +13,36 @@ const PLAINTEXT = 'text/plain;charset=utf-8';
 
 class ServerRouter {
   constructor (config, viewsGeneratorCollection) {
+    /**
+     * Router
+     * @type {Router}
+     */
     this.router = new Router({});
+    /**
+     * All config data
+     * loaded from config/config.json file and other which are added later
+     * @type {object}
+     */
     this.config = config;
+    /**
+     * Logger
+     * @type {Winston}
+     */
     this.logger = this.config.logging.logger;
+
+    // NOTE: maybe would be beneficial to add some DI container
+    /**
+     * Array of controllers
+     * @type {{TriplePatternFragmentsController: TriplePatternFragmentsController, AssetsController: AssetsController, DereferenceController: DereferenceController, ErrorController}}
+     */
     this.controllers = {
       TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger, viewsGeneratorCollection),
       AssetsController: new AssetsController(this.config, this.logger),
-      DereferenceController: new DereferenceController(this.config, this.logger)
+      DereferenceController: new DereferenceController(this.config, this.logger),
+      ErrorController: new ErrorController(this.config, this.logger)
     };
 
+    // sets all routes, which are defined below
     this.setRoutes();
   }
 
@@ -43,6 +65,7 @@ class ServerRouter {
 
     /**
      * Route for all static assets
+     * accessible from /assets folder and its sub-folders
      */
     this.router.get('/assets/*', (req, res, params) => {
       this.controllers.AssetsController.handle(req, res);
@@ -63,23 +86,34 @@ class ServerRouter {
     /**
      * Single relevant endpoint for extracting fragments
      * - all other arguments are given via GET parameters (matching for other parameters must be done in Controller itself)
-     * TODO: think of better solution
+     * NOTE: think of better solution
      */
     this.router.get('/*', (req, res, params) => {
-      this.controllers.TriplePatternFragmentsController.handle(this.parseUrlAndHeaders(req), res, () => {});
+      this.controllers.TriplePatternFragmentsController.handle(this.parseUrlAndHeaders(req), res, this.reportError);
     });
 
-    // all other http methods
+    /**
+     * All other methods, which are not mentioned before
+     */
     this.router.all('*', (req, res, params) => {
       res.writeHead(405, { 'Content-Type': PLAINTEXT });
       res.end(`The HTTP method ${req.method} is not allowed; try "GET" instead.`);
     });
   }
 
-  get getRouter () {
+  /**
+   * Returns instance of Router
+   * @returns {Router}
+   */
+  get getRoutes () {
     return this.router;
   }
 
+  /**
+   * Modifies Node.js request object, adds parsed URL, headers, query
+   * @param request
+   * @returns {Request}
+   */
   parseUrlAndHeaders (request) {
     this._baseUrl = _.mapValues(url.parse(this.config.baseURL || '/'), function (value, key) {
       return value && !/^(?:href|path|search|hash)$/.test(key) ? value : undefined;
@@ -111,8 +145,9 @@ class ServerRouter {
   }
 
   /**
-   *
-   * @param {IncomingMessage} request
+   * Parses Forwarded Headers in request
+   * @param {Request} request
+   * @return {{protocol: string, host: string} || {}}
    */
   static getForwardedHeaders (request) {
     if (!request.headers.forwarded) {
@@ -131,6 +166,11 @@ class ServerRouter {
     }
   }
 
+  /**
+   * Parses X-Forwarded Headers in request
+   * @param request
+   * @return {{protocol: String, host: String} || {}}
+   */
   static getXForwardedHeaders (request) {
     return {
       protocol: request.headers['x-forwarded-proto'] ? request.headers['x-forwarded-proto'] + ':' : undefined,
@@ -140,13 +180,50 @@ class ServerRouter {
 
   /**
    * Handling negotiation failure
-   * @param {ServerResponse} response
+   * @param {Response} response
    * @returns void
    */
   static handleNotAcceptable (response) {
     response.writeHead(406, { 'Content-Type': PLAINTEXT });
     response.end('No suitable content type found.\n');
   }
+
+  /**
+   * Handling errors
+   * @param request
+   * @param response
+   * @param error
+   */
+  reportError (request, response, error) {
+    // Log the error
+    this.logger.error(error.stack);
+
+    // Try to report the error in the response
+    try {
+      // Ensure errors are not handled recursively, and don't modify an already started response
+      if (response.error || response.headersSent) {
+        return response.end();
+      }
+      response.error = error;
+      this.controllers.ErrorController.handleRequest(request, response, _.noop);
+    } catch (responseError) {
+      this.logger.error(responseError.stack);
+    }
+  };
+
+  /**
+   * Exits controllers
+   */
+  stop () {
+    // Close all controllers
+    this.controllers.forEach((controller) => {
+      try {
+        controller.close && controller.close();
+      } catch (error) {
+        this.logger.error(error);
+      }
+    });
+  };
 }
 
 module.exports = ServerRouter;
