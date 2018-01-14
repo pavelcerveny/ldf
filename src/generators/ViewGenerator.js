@@ -18,6 +18,11 @@ class ViewGenerator {
     console.log('abstract method');
   }
 
+  /**
+   * Parses content types supplied with instances of ViewGenerator
+   * @param contentTypes
+   * @return {*|Array}
+   */
   parseContentTypes (contentTypes) {
     let matcher = Object.create(null);
     if (typeof contentTypes === 'string') {

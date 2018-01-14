@@ -37,7 +37,7 @@ class TriplePatternFragmentsController extends Controller {
     const datasourceSettings = this.datasources[datasource];
 
     if (!datasourceSettings) {
-      next(); // TODO: error, not found, other
+      return next('handleNotFound');
     }
 
     /*
@@ -54,11 +54,11 @@ class TriplePatternFragmentsController extends Controller {
     };
 
     if (!datasourceSettings.datasource.supportsQuery(query)) {
-      next(new Error('Datasource does not support given query!'));
+      return next(new Error('Datasource does not support given query!'));
     }
 
     const result = datasourceSettings.datasource.select(query, (error) => {
-      next(error);
+      return next(error);
     });
 
     const metadata = this.createFragmentMetadata(request, query, datasourceSettings);
@@ -67,17 +67,21 @@ class TriplePatternFragmentsController extends Controller {
     const generator = this.viewsGeneratorCollection.getGenerator(matchedGenerator, next);
 
     const settings = {
+      datasources: this.datasources,
       result,
-      metadata,
+      ...metadata,
       fragment: metadata.fragment,
       datasource: datasourceSettings,
       query
     };
     // console.log(settings);
     generator.render(settings, request, response, (error) => {
-      next(error);
+      if (error)
+        response.emit('error', error);
+      response.end();
+      done && done();
     });
-    return response;
+    //  return response;
   }
 
   /**

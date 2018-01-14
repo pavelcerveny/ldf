@@ -17,6 +17,12 @@ class ViewGeneratorCollection {
     return instance;
   }
 
+  /**
+   * Returns generator from array of generator instances
+   * @param matchedGen
+   * @param next
+   * @return {*}
+   */
   getGenerator (matchedGen, next) {
     if (matchedGen.generator.length) {
       return this.viewGenerators[matchedGen.generator];
@@ -25,10 +31,16 @@ class ViewGeneratorCollection {
     }
   }
 
+  /**
+   * Match generator using name and request's requirements
+   * @param name
+   * @param request
+   * @param next
+   * @return {string}
+   */
   matchGenerator (name, request, next) {
     // Retrieve all possible content types for specific template generator name
     const generatorList = this.viewGeneratorsContentType[name];
-
     if (!generatorList || !generatorList.length) {
       next('handleNotAcceptable');
     }
@@ -41,6 +53,9 @@ class ViewGeneratorCollection {
     return generatorDetails;
   };
 
+  /**
+   * Instantiate all generator instances in /templates folder
+   */
   instantiateAll () {
     const files = this.findGeneratorFiles('./templates', /\.js$/);
 
@@ -55,6 +70,13 @@ class ViewGeneratorCollection {
     });
   }
 
+  /**
+   * Recursive file look up
+   * @param folder
+   * @param pattern
+   * @param includeCurrentFolder
+   * @return {Array}
+   */
   findGeneratorFiles (folder, pattern, includeCurrentFolder) {
     folder = path.resolve(__dirname, folder);
     return _.flatten(_.compact(fs.readdirSync(folder).map((name) => {

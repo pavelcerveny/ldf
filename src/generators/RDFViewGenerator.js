@@ -22,7 +22,7 @@ class RDFViewGenerator extends ViewGenerator {
 
   getWriter (settings, request, response, done) {
     settings.fragmentUrl = (settings.fragment && settings.fragment.url) || '';
-    settings.metadataGraph = settings.fragmentUrl + '#metadata';
+    settings.metadataGraph = settings.fragmentUrl + '#metadata' || '';
     settings.contentType = response.getHeader('Content-Type');
 
     settings.writer = /json/.test(settings.contentType) ? this.createJsonLdWriter(settings, response, done)
@@ -31,6 +31,12 @@ class RDFViewGenerator extends ViewGenerator {
     return settings;
   }
 
+  /**
+   * Creates RDF info about datasource
+   * @param settings
+   * @param data
+   * @param metadata
+   */
   addDatasources (settings, data, metadata) {
     const datasources = settings.datasources;
     for (let datasourceName in datasources) {
@@ -43,6 +49,13 @@ class RDFViewGenerator extends ViewGenerator {
     }
   }
 
+  /**
+   * Creates RDF data for fragment - formats: quads, trig, turtle, n-triples, n3
+   * @param settings
+   * @param response
+   * @param done
+   * @return {{data: data, meta: meta, end: end}}
+   */
   createN3Writer (settings, response, done) {
     const writer = new N3.Writer({ format: settings.contentType, prefixes: settings.prefixes });
     const supportsGraphs = /trig|quad/.test(settings.contentType);
@@ -75,6 +88,13 @@ class RDFViewGenerator extends ViewGenerator {
     };
   }
 
+  /**
+   * Creates RDF data for fragment - formats: json, json-ld
+   * @param settings
+   * @param response
+   * @param done
+   * @return {{data: data, meta: meta, end: end}}
+   */
   createJsonLdWriter (settings, response, done) {
     // Initialize triples, prefixes, and document base
     const quads = { '@default': [] };
@@ -119,17 +139,23 @@ class RDFViewGenerator extends ViewGenerator {
     };
   }
 
-  // Converts a triple to the JSON-LD library representation
+  /**
+   * Converts a triple to the JSON-LD library representation
+   * @param subject
+   * @param predicate
+   * @param object
+   * @return {{subject: {value: *, type: string}, predicate: {value: *, type: string}, object: *}}
+   */
   static toJsonLdTriple (subject, predicate, object) {
     return {
-      subject:   { value: subject,   type: subject[0]   !== '_' ? 'IRI' : 'blank node' },
+      subject: { value: subject, type: subject[0] !== '_' ? 'IRI' : 'blank node' },
       predicate: { value: predicate, type: predicate[0] !== '_' ? 'IRI' : 'blank node' },
-      object: !N3.Util.isLiteral(object) ?
-        { value: object,    type: object[0]    !== '_' ? 'IRI' : 'blank node' } :
-        {
-          value:    N3.Util.getLiteralValue(object),
+      object: !N3.Util.isLiteral(object)
+        ? { value: object, type: object[0] !== '_' ? 'IRI' : 'blank node' }
+        : {
+          value: N3.Util.getLiteralValue(object),
           datatype: N3.Util.getLiteralType(object),
-          language: N3.Util.getLiteralLanguage(object),
+          language: N3.Util.getLiteralLanguage(object)
         }
     };
   }

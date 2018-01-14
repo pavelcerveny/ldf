@@ -1,5 +1,4 @@
-# if you're doing anything beyond your local machine, please pin this to a specific version at https://hub.docker.com/_/node/
-FROM node:latest
+FROM node:9.4.0
 
 RUN mkdir -p /opt/app
 
@@ -8,7 +7,7 @@ RUN mkdir -p /opt/app
 ARG NODE_ENV=development
 ENV NODE_ENV $NODE_ENV
 
-# default to port 80 for node, and 5858 or 9229 for debug
+# port on which the node instance running
 ARG PORT=3000
 ENV PORT $PORT
 EXPOSE $PORT
@@ -30,9 +29,5 @@ ENV PATH /opt/node_modules/.bin:$PATH
 WORKDIR /opt/app
 COPY . /opt/app
 
-# if you want to use npm start instead, then use `docker run --init in production`
-# so that signals are passed properly. Note the code in index.js is needed to catch Docker signals
-# using node here is still more graceful stopping then npm with --init afaik
-# I still can't come up with a good production way to run with npm and graceful shutdown
-# CMD ["nodemon", "-L", "./bin/ldf-server", "./config/config.json"]
+# nodemon needs to be run with option -L in docker env
 CMD ["nodemon", "-L", "."]

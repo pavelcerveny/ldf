@@ -3,13 +3,13 @@ const Controller = require('./Controller');
 let instance; // singleton hack
 
 class NotFoundController extends Controller {
-  constructor (config, logger) {
+  constructor (config, logger, viewsGeneratorCollection) {
     super(config, logger);
 
     if (!instance) {
       instance = this;
     }
-
+    this.viewsGeneratorCollection = viewsGeneratorCollection;
     return instance;
   }
 

@@ -16,8 +16,13 @@ class HTMLViewGenerator extends ViewGenerator {
     };
   }
 
+  /**
+   * Renders layout base template
+   * @param data
+   * @param response
+   */
   renderLayout (data, response) {
-    return layout.render(data, response);
+    layout.render(data, response);
   }
 }
 

@@ -19,8 +19,10 @@ $ var voID = 'http://rdfs.org/ns/void#';
         <p>Browse the following datasets as <a href="http://linkeddatafragments.org/in-depth/#tpf">Triple Pattern Fragments</a>:</p>
         <dl class="datasets">
         $ var datasources = input.datasources;
-        <for (datasourceName in datasources)>
-        <!-- for render as foreach -> cannot use continue inside, only return -->
+        $ var datasourcesNames = Object.keys(input.datasources);
+
+        <for (datasourceName in datasourcesNames)>
+            <!-- for render as foreach -> cannot use continue inside, only return -->
             $ {
                 var datasource = datasources[datasourceName];
                 if (datasource.role === 'index' || datasource.hide) return;

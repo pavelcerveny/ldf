@@ -40,8 +40,8 @@ class ServerRouter {
       TriplePatternFragmentsController: new TriplePatternFragmentsController(this.config, this.logger, viewsGeneratorCollection),
       AssetsController: new AssetsController(this.config, this.logger),
       DereferenceController: new DereferenceController(this.config, this.logger),
-      ErrorController: new ErrorController(this.config, this.logger),
-      NotFoundController: new NotFoundController(this.config, this.logger)
+      ErrorController: new ErrorController(this.config, this.logger, viewsGeneratorCollection),
+      NotFoundController: new NotFoundController(this.config, this.logger, viewsGeneratorCollection)
     };
 
     // sets all routes, which are defined below
@@ -121,7 +121,7 @@ class ServerRouter {
    * Returns instance of Router
    * @returns {Router}
    */
-  get getRoutes () {
+  get getRouter () {
     return this.router;
   }
 

@@ -24,7 +24,7 @@ let config = deepmerge(defaultConfig, customConfig);
 const noop = () => {};
 
 // default fake logger
-this.config.logger = {
+config.logging.logger = {
   info: noop,
   error: noop,
   warn: noop,
@@ -127,6 +127,6 @@ const router = new ServerRouter(config, viewGeneratorCol);
 server.setRouter = router;
 server.createServer();
 
-server.stopServer();
+// server.stopServer();
 
 // TODO: ssl, cluster, run application in cluster workers

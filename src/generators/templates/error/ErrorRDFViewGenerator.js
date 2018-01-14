@@ -3,7 +3,7 @@ let instance = null;
 
 class ErrorRDFViewGenerator extends RDFViewGenerator {
   constructor () {
-    super('notFound');
+    super('error');
     if (!instance) {
       instance = this;
     }

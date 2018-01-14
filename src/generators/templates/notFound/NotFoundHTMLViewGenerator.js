@@ -16,7 +16,9 @@ class NotFoundHTMLViewGenerator extends HTMLViewGenerator {
     this.basics.component = notFoundComp;
 
     this.renderLayout({
-      ...settings,
+      data: {
+        ...settings
+      },
       ...this.basics
     }, response);
   }

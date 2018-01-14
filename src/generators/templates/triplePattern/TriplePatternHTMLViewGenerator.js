@@ -2,7 +2,6 @@ const N3Util = require('n3').Util;
 const HTMLViewGenerator = require('../../HTMLViewGenerator');
 const indexDatasource = require('../../../views/tripplePattern/indexDatasource.marko');
 const datasource = require('../../../views/tripplePattern/datasource.marko');
-
 let instance = null;
 
 class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
@@ -37,6 +36,7 @@ class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
     });
     results.getProperty('metadata', (metadata) => {
       settings.metadata = metadata;
+      // console.log(settings.metadata)
       results.ended && this.renderHTML(settings, request, response);
     });
   }
@@ -63,13 +63,15 @@ class TriplePatternHTMLViewGenerator extends HTMLViewGenerator {
       N3Util
     };
 
-    this.renderLayout({
+    const inputData = {
       ...this.basics,
       data: {
         ...settings,
         fragment
       }
-    }, response);
+    };
+
+    this.renderLayout(inputData, response);
   }
 }
 

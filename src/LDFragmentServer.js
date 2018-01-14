@@ -23,7 +23,10 @@ class LDFragmentServer {
     this.server.on('request', (req, res) => {
       this.logger.info(`New request - pathname: ${req.url}`);
       // execute router matching
-      this.router.getRouter(req, res);
+      this.router.getRouter(req, res, (error) => {
+        this.logger.error(`Fatal error, exiting process:\n ${error.stack}`);
+        // return process.exit(-1);
+      });
     });
 
     this.server.on('error', (request, response, error) => {
